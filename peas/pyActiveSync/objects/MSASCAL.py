@@ -25,6 +25,9 @@ def parse_calendar(data):
     calendar_dict = {}
     calendar_base = data.get_children()
     calendar_dict.update({"server_id" : calendar_base[0].text})
+    # when delete cmd, return simple dict
+    if len(calendar_base) == 1:
+        return calendar_dict
     calendar_elements = calendar_base[1].get_children()
     for element in calendar_elements:
         if element.tag == "calendar:AllDayEvent":

@@ -106,7 +106,11 @@ class airsyncbase_Body(object):
                 self.airsyncbase_Preview = element.text
     def marshal(self):
         import base64
-        return "%s//%s//%s//%s//%s//%s" % (repr(self.airsyncbase_Type), repr(self.airsyncbase_EstimatedDataSize), repr(self.airsyncbase_Truncated), base64.b64encode(self.airsyncbase_Data), repr(self.airsyncbase_Part), repr(self.airsyncbase_Preview))
+        # airsyncbase_Data None possible
+        datastring = ""
+        if self.airsyncbase_Data is not None:
+            datastring = base64.b64encode(self.airsyncbase_Data)
+        return "%s//%s//%s//%s//%s//%s" % (repr(self.airsyncbase_Type), repr(self.airsyncbase_EstimatedDataSize), repr(self.airsyncbase_Truncated), datastring, repr(self.airsyncbase_Part), repr(self.airsyncbase_Preview))
     def __repr__(self):
         return self.marshal()
 

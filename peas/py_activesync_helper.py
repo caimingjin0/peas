@@ -95,9 +95,13 @@ def do_provision(as_conn, device_info):
 def do_sync(as_conn, curs, collections, emails_out):
 
     as_sync_xmldoc_req = Sync.build(storage.get_synckeys_dict(curs), collections)
-    #print "\r\nSync Request:"
-    #print as_sync_xmldoc_req
-    res = as_conn.post("Sync", parser.encode(as_sync_xmldoc_req))
+    print "\r\nSync Request:"
+    print as_sync_xmldoc_req
+    try:
+        buffer = parser.encode(as_sync_xmldoc_req)
+        res = as_conn.post("Sync", buffer)
+    except Exception as e:
+        print e
     #print "\r\nSync Response:"
     if res == '':
         #print "Nothing to Sync!"
@@ -105,9 +109,9 @@ def do_sync(as_conn, curs, collections, emails_out):
     else:
         collectionid_to_type_dict = storage.get_serverid_to_type_dict()
         as_sync_xmldoc_res = parser.decode(res)
-        #print type(as_sync_xmldoc_res), dir(as_sync_xmldoc_res), as_sync_xmldoc_res
+        print type(as_sync_xmldoc_res), dir(as_sync_xmldoc_res), as_sync_xmldoc_res
 
-        _parse_for_emails(as_sync_xmldoc_res, emails_out)
+        # _parse_for_emails(as_sync_xmldoc_res, emails_out)
 
         sync_res = Sync.parse(as_sync_xmldoc_res, collectionid_to_type_dict)
         storage.update_items(sync_res)
@@ -152,7 +156,7 @@ def sync(as_conn, curs, collections, collection_sync_params, gie_options, emails
     has_synckey, just_got_synckey = getitemestimate_check_prime_collections(as_conn, curs, getitemestimate_responses,
                                                                             emails_out)
 
-    if (len(has_synckey) < collections) or (len(just_got_synckey) > 0):  #grab new estimates, since they changed
+    if (len(has_synckey) < len(collections)) or (len(just_got_synckey) > 0):  #grab new estimates, since they changed
         getitemestimate_responses = do_getitemestimates(as_conn, curs, has_synckey, gie_options)
 
     collections_to_sync = {}
@@ -187,12 +191,12 @@ def disable_certificate_verification():
 
 def extract_emails(creds):
 
-    storage.erase_db()
+    # storage.erase_db()
     storage.create_db_if_none()
 
     conn, curs = storage.get_conn_curs()
     device_info = {"Model": "1234", "IMEI": "123457",
-                   "FriendlyName": "My pyAS Client 2", "OS": "Python", "OSLanguage": "en-us", "PhoneNumber": "NA",
+                   "FriendlyName": "My pyAS Client 2", "OS": "Python", "OSLanguage": "zh-Hans-CN", "PhoneNumber": "NA",
                    "MobileOperator": "NA", "UserAgent": "pyAS"}
 
     #create ActiveSync connector
@@ -220,35 +224,36 @@ def extract_emails(creds):
 
     collection_id_of = storage.get_folder_name_to_id_dict()
 
-    inbox = collection_id_of["Inbox"]
-
+    #{u'SaaS\u53d1\u5e03\': u'10001002#U#17732927006771671', u'\u65e5\u5386': u'10001002', u'\u6f14\u793a\u65e5\u5386': u'10001002#U#17732923698771830'}
+    # inbox = collection_id_of["Inbox"]
+    inbox = '10001002'
     collection_sync_params = {
         inbox:
             {  #"Supported":"",
                #"DeletesAsMoves":"1",
                #"GetChanges":"1",
-               "WindowSize": "512",
+               "WindowSize": 20,
                "Options": {
                    "FilterType": airsync_FilterType.OneMonth,
-                   "Conflict": airsync_Conflict.ServerReplacesClient,
-                   "MIMETruncation": airsync_MIMETruncation.TruncateNone,
-                   "MIMESupport": airsync_MIMESupport.SMIMEOnly,
-                   "Class": airsync_Class.Email,
+                   # "Conflict": airsync_Conflict.ServerReplacesClient,
+                   # "MIMETruncation": airsync_MIMETruncation.TruncateNone,
+                   # "MIMESupport": airsync_MIMESupport.SMIMEOnly,
+                   # "Class": airsync_Class.Calendar,
                    #"MaxItems":"300", #Recipient information cache sync requests only. Max number of frequently used contacts.
                    "airsyncbase_BodyPreference": [{
-                                                      "Type": airsyncbase_Type.HTML,
-                                                      "TruncationSize": "1000000000",  # Max 4,294,967,295
-                                                      "AllOrNone": "1",
+                                                      "Type": airsyncbase_Type.Plaintext,
+                                                      "TruncationSize": "32768",  # Max 4,294,967,295
+                                                      # "AllOrNone": "1",
                                                       # I.e. Do not return any body, if body size > tuncation size
                                                       #"Preview": "255", # Size of message preview to return 0-255
                                                   },
-                                                  {
-                                                      "Type": airsyncbase_Type.MIME,
-                                                      "TruncationSize": "3000000000",  # Max 4,294,967,295
-                                                      "AllOrNone": "1",
+                                                  # {
+                                                  #     "Type": airsyncbase_Type.Plaintext,
+                                                  #     "TruncationSize": "32768",  # Max 4,294,967,295
+                                                      # "AllOrNone": "1",
                                                       # I.e. Do not return any body, if body size > tuncation size
                                                       #"Preview": "255", # Size of message preview to return 0-255
-                                                  }
+                                                  # }
                    ],
                    #"airsyncbase_BodyPartPreference":"",
                    #"rm_RightsManagementSupport":"1"
@@ -258,18 +263,25 @@ def extract_emails(creds):
                },
     }
 
+    # gie_options = {
+    #     inbox:
+    #         {  #"ConversationMode": "0",
+    #            "Class": airsync_Class.Email,
+    #            "FilterType": airsync_FilterType.OneMonth
+    #            #"MaxItems": "" #Recipient information cache sync requests only. Max number of frequently used contacts.
+    #            },
+    # }
     gie_options = {
         inbox:
-            {  #"ConversationMode": "0",
-               "Class": airsync_Class.Email,
-               "FilterType": airsync_FilterType.OneMonth
-               #"MaxItems": "" #Recipient information cache sync requests only. Max number of frequently used contacts.
-               },
+            {  # "ConversationMode": "0",
+                "Class": airsync_Class.Calendar,
+                "FilterType": airsync_FilterType.OneMonth
+                # "MaxItems": "" #Recipient information cache sync requests only. Max number of frequently used contacts.
+            },
     }
 
     collections = [inbox]
     emails = []
-
     sync(as_conn, curs, collections, collection_sync_params, gie_options, emails)
 
     if storage.close_conn_curs(conn):

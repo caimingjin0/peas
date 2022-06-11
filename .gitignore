@@ -1,0 +1,6 @@
+
+.idea/
+PEAS.egg-info
+*.pyc
+*.log
+pyas.asdb

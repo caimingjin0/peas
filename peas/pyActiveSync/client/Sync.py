@@ -160,6 +160,9 @@ class Sync:
             while collection_counter < airsyncbase_sync_collection_children_count:
                 if airsyncbase_sync_collection_children[collection_counter].tag == "SyncKey":
                     new_collection.SyncKey = airsyncbase_sync_collection_children[collection_counter].text
+                    # calender sync, 0 sync always return 1, make it continue
+                    if new_collection.SyncKey == '1':
+                        new_collection.MoreAvailable = True
                 elif airsyncbase_sync_collection_children[collection_counter].tag == "CollectionId":
                     new_collection.CollectionId = airsyncbase_sync_collection_children[collection_counter].text
                 elif airsyncbase_sync_collection_children[collection_counter].tag == "Status":
@@ -177,7 +180,10 @@ class Sync:
                             add_item = Sync.parse_item(airsyncbase_sync_commands_children[commands_counter], new_collection.CollectionId, collectionid_to_type_dict)
                             new_collection.Commands.append(("Add", add_item))
                         elif airsyncbase_sync_commands_children[commands_counter].tag == "Delete":
-                            new_collection.Commands.append(("Delete", airsyncbase_sync_commands_children[commands_counter].get_children()[0].text))
+                            # when delete cmd, keep dict
+                            delete_item = Sync.parse_item(airsyncbase_sync_commands_children[commands_counter], new_collection.CollectionId, collectionid_to_type_dict)
+                            new_collection.Commands.append(("Delete", delete_item))
+                            # new_collection.Commands.append(("Delete", airsyncbase_sync_commands_children[commands_counter].get_children()[0].text))
                         elif airsyncbase_sync_commands_children[commands_counter].tag == "Change":
                             update_item = Sync.parse_item(airsyncbase_sync_commands_children[commands_counter], new_collection.CollectionId, collectionid_to_type_dict)
                             new_collection.Commands.append(("Change", update_item))

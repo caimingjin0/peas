@@ -311,7 +311,9 @@ class storage:
         for calendar_field in calendar_dict.keys():
             calendar_cols += (", '%s'" % calendar_field)
             calendar_vals += (", '%s'"  % repr(calendar_dict[calendar_field]).replace("'","''"))
-        sql = "INSERT INTO %s ( 'ServerId' %s ) VALUES ( '%s' %s )" % (table, calendar_cols, server_id, calendar_vals)
+        # calendar exist same key , i do not know why
+        sql = "INSERT OR IGNORE INTO %s ( 'ServerId' %s ) VALUES ( '%s' %s )" % (table, calendar_cols, server_id, calendar_vals)
+        print "insert calendar date item, id %s" % server_id
         curs.execute(sql)
 
     @staticmethod
@@ -326,8 +328,9 @@ class storage:
         curs.execute(sql)
     
     @staticmethod
-    def delete_item(table, sever_id, curs):
-        sql = "DELETE FROM %s WHERE ServerId='%s'" % (table, sever_id)
+    def delete_item(table, calendar_dict, curs):
+        server_id = calendar_dict["server_id"]
+        sql = "DELETE FROM %s WHERE ServerId='%s'" % (table, server_id)
         curs.execute(sql)
 
     class ItemOps:
@@ -371,13 +374,13 @@ class storage:
                     storage.item_operation(storage.ItemOps.Update, command[1][1], command[1][0], curs)
                 elif command[0] == "SoftDelete":
                     storage.item_operation(storage.ItemOps.SoftDelete, command[1][1], command[1][0], curs)
-            if collection.SyncKey > 1:
+            if int(collection.SyncKey) >= 1:
+                print 'update synckey to %s' % collection.SyncKey
                 storage.update_synckey(collection.SyncKey, collection.CollectionId, curs)
-                conn.commit()
             else:
                 conn.close()
                 raise AttributeError("SyncKey incorrect")
-
+            print 'new synckey: %s' % collection.SyncKey
         conn.commit()
         conn.close()
 
