@@ -4,3 +4,4 @@ PEAS.egg-info
 *.pyc
 *.log
 pyas.asdb
+cookies.json
