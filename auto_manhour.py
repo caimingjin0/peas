@@ -92,11 +92,6 @@ def get_manhour_task(dateprefix):
 
 
 def auto_log_events(task_uuid, events):
-    '''
-    "uuid": server_id,
-    "title": title,
-    "start_at": start,
-    "duration_mins": mins'''
     for event in events:
         key = "event:%s" % event['uuid']
         exist = get_manhour_keyvalue(key)
@@ -107,11 +102,11 @@ def auto_log_events(task_uuid, events):
             title = event['title']
             if add_ones_manhour(start_unix, task_uuid, mins, title):
                 set_manhour_keyvalue(key, "true")
-                print 'add_ones_manhour task: %s, desc: %s , start at: %s, duration_mins: %2.f success' % \
-                    (task_uuid, title.decode('utf-8', 'ignore'), start_at, mins)
+                print 'add_ones_manhour: key: %s , task: %s, desc: %s , start at: %s, duration_mins: %2.f success' % \
+                    (key, task_uuid, title.decode('utf-8', 'ignore'), start_at, mins)
             else:
-                print 'add_ones_manhour task: %s, desc: %s , start at: %s, duration_mins: %2.f fail' % \
-                      (task_uuid, title.decode('utf-8', 'ignore'), start_at, mins)
+                print 'add_ones_manhour: key: %s , task: %s, desc: %s , start at: %s, duration_mins: %2.f fail' % \
+                      (key, task_uuid, title.decode('utf-8', 'ignore'), start_at, mins)
 
 cookies = {}
 
@@ -212,7 +207,7 @@ def add_ones_manhour(start_unix_time, taskUUID, mins, desc=''):
     #       (taskUUID, desc.decode('utf-8', 'ignore'))
     response = requests.post('https://ones.ai/project/api/project/team/RDjYMhKq/items/graphql', cookies=cookies,
                              headers=headers, json=json_data)
-    print "response: \n", response.json()
+    print "add_ones_manhour: " + desc + "response: \n", response.json()
     return response.status_code == 200
 
 
@@ -229,7 +224,7 @@ def main(days=0):
 
 
 if __name__ == '__main__':
-    print 'start auto log manhour'
+    print 'start auto log manhour', datetime.now()
     # for i in range(15, 30):
     #     main(i)
     main(0)
